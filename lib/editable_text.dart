@@ -586,6 +586,7 @@ class EditableText extends StatefulWidget {
     this.contentInsertionConfiguration,
     this.contextMenuBuilder,
     this.undoController,
+    this.onDelta,
   })  : assert(obscuringCharacter.length == 1),
         smartDashesType = smartDashesType ??
             (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
@@ -613,6 +614,8 @@ class EditableText extends StatefulWidget {
               ]
             : inputFormatters,
         showCursor = showCursor ?? !readOnly;
+
+  final Function(TextEditingDelta)? onDelta;
 
   /// Controls the text being edited.
   final TextEditingController controller;
@@ -2205,7 +2208,7 @@ class EditableTextState extends State<EditableText>
     TextEditingValue value = _value;
 
     for (final delta in textEditingDeltas) {
-      print(delta);
+      widget.onDelta?.call(delta);
       value = delta.apply(value);
     }
 
