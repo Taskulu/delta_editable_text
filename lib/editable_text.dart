@@ -2205,9 +2205,12 @@ class EditableTextState extends State<EditableText>
       return;
     }
 
+    print('updateEditingValueWithDeltas');
+
     TextEditingValue value = _value;
 
     for (final delta in textEditingDeltas) {
+      print(delta);
       widget.onDelta?.call(delta);
       value = delta.apply(value);
     }
@@ -2820,13 +2823,18 @@ class EditableTextState extends State<EditableText>
     return selectionOverlay;
   }
 
+  static bool _isSelectionWithinTextBounds(
+      String text, TextSelection selection) {
+    return selection.start <= text.length && selection.end <= text.length;
+  }
+
   @pragma('vm:notify-debugger-on-exception')
   void _handleSelectionChanged(
       TextSelection selection, SelectionChangedCause? cause) {
     // We return early if the selection is not valid. This can happen when the
     // text of [EditableText] is updated at the same time as the selection is
     // changed by a gesture event.
-    if (!widget.controller.isSelectionWithinTextBounds(selection)) {
+    if (!_isSelectionWithinTextBounds(widget.controller.text, selection)) {
       return;
     }
 
@@ -4070,8 +4078,9 @@ class EditableTextState extends State<EditableText>
                           expands: widget.expands,
                           strutStyle: widget.strutStyle,
                           selectionColor: widget.selectionColor,
-                          textScaleFactor: widget.textScaleFactor ??
-                              MediaQuery.textScaleFactorOf(context),
+                          textScaler: widget.textScaleFactor != null
+                              ? TextScaler.linear(widget.textScaleFactor!)
+                              : MediaQuery.textScalerOf(context),
                           textAlign: widget.textAlign,
                           textDirection: _textDirection,
                           locale: widget.locale,
@@ -4168,7 +4177,7 @@ class _Editable extends MultiChildRenderObjectWidget {
     required this.expands,
     this.strutStyle,
     this.selectionColor,
-    required this.textScaleFactor,
+    required this.textScaler,
     required this.textAlign,
     required this.textDirection,
     this.locale,
@@ -4190,8 +4199,7 @@ class _Editable extends MultiChildRenderObjectWidget {
     this.promptRectColor,
     required this.clipBehavior,
   }) : super(
-            children:
-                WidgetSpan.extractFromInlineSpan(inlineSpan, textScaleFactor));
+            children: WidgetSpan.extractFromInlineSpan(inlineSpan, textScaler));
 
   final InlineSpan inlineSpan;
   final TextEditingValue value;
@@ -4208,7 +4216,7 @@ class _Editable extends MultiChildRenderObjectWidget {
   final bool expands;
   final StrutStyle? strutStyle;
   final Color? selectionColor;
-  final double textScaleFactor;
+  final TextScaler textScaler;
   final TextAlign textAlign;
   final TextDirection textDirection;
   final Locale? locale;
@@ -4249,7 +4257,7 @@ class _Editable extends MultiChildRenderObjectWidget {
       expands: expands,
       strutStyle: strutStyle,
       selectionColor: selectionColor,
-      textScaleFactor: textScaleFactor,
+      textScaler: textScaler,
       textAlign: textAlign,
       textDirection: textDirection,
       locale: locale ?? Localizations.maybeLocaleOf(context),
@@ -4293,7 +4301,7 @@ class _Editable extends MultiChildRenderObjectWidget {
       ..expands = expands
       ..strutStyle = strutStyle
       ..selectionColor = selectionColor
-      ..textScaleFactor = textScaleFactor
+      ..textScaler = textScaler
       ..textAlign = textAlign
       ..textDirection = textDirection
       ..locale = locale ?? Localizations.maybeLocaleOf(context)
